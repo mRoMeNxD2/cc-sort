@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sorter</title>
+    <style>
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            0% {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+            overflow: hidden;
+            background: linear-gradient(135deg, #ff7eb3, #ff758c, #ff6c62);
+        }
+
+        video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+
+        audio {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            background: rgba(20, 20, 20, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            animation: fadeIn 2s ease-in-out, slideUp 1.5s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #7cf537;
+            text-shadow: 0 0 15px #bfee15;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 15px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #333;
+            color: #fff;
+            resize: none;
+            outline: none;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.5);
+            transition: box-shadow 0.3s ease;
+        }
+
+        textarea:focus {
+            box-shadow: inset 0 4px 12px rgba(0, 136, 204, 0.7);
+        }
+
+        button {
+            width: calc(50% - 5px);
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background: linear-gradient(45deg, #ff4d4d, #ff9999);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px 0;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #e63946, #f77f7f);
+            transform: scale(1.1);
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .telegram-button {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            background: linear-gradient(45deg, #0088cc, #00aaff);
+            color: #fff;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 136, 204, 0.7);
+        }
+
+        .telegram-button:hover {
+            background: linear-gradient(45deg, #005f99, #007acc);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 136, 204, 1);
+        }
+    </style>
+</head>
+
+<body>
+    <video autoplay loop muted>
+        <source src="https://envs.sh/7yL.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <audio autoplay controls>
+        <source src="http://167.88.43.57/high.mp3" type="audio/mp3">
+        Your browser does not support the audio tag.
+    </audio>
+
+
+    <div class="container">
+        <h1>Card Sorter</h1>
+        <textarea id="input" placeholder="Enter your cards here..."></textarea>
+        <div class="button-container">
+            <button onclick="sortCards()">Sort Cards</button>
+            <button onclick="copyToClipboard()">Copy Output</button>
+        </div>
+        <textarea id="output" placeholder="Sorted cards will appear here..." readonly></textarea>
+        <a href="https://t.me/SynaxBins" class="telegram-button" target="_blank">Join My Telegram</a>
+    </div>
+
+<script>
+    function sortCards() {
+        const input = document.getElementById('input').value;
+        const output = document.getElementById('output');
+
+        // Regex patterns for card components
+        const combinedRegex = /\b(\d{16})[\s|\|]+(\d{1,2})[\s|\|]+(\d{2,4})[\s|\|]+(\d{3,4})\b/;
+        const cardRegex = /\b\d{16}\b/; // 16-digit credit card number
+        const monthRegex = /\b(0[1-9]|1[0-2])\b/; // Valid months (01 to 12)
+        const yearRegex = /\b(20\d{2})\b/; // Year in 20xx format
+        const cvvRegex = /\b\d{3,4}\b/; // CVV numbers 3 or 4 digits
+
+        const lines = input.split('\n');
+        const sortedCards = lines.map((line, index) => {
+            try {
+                // Check for the combined pattern first
+                const combinedMatch = line.match(combinedRegex);
+
+                if (combinedMatch) {
+                    const [_, ccn, mm, yy, cvv] = combinedMatch;
+                    const normalizedYear = yy.length === 2 ? '20' + yy : yy;
+                    return `${index + 1}: ${ccn}|${mm}|${normalizedYear}|${cvv}`;
+                }
+
+                // If combined match fails, fallback to individual regex
+                const ccnMatch = line.match(cardRegex);
+                const monthMatch = line.match(monthRegex);
+                const yearMatch = line.match(yearRegex);
+                const cvvMatch = line.match(cvvRegex);
+
+                if (ccnMatch && monthMatch && yearMatch && cvvMatch) {
+                    const ccn = ccnMatch[0];
+                    const mm = monthMatch[0];
+                    const yy = yearMatch[0];
+                    const cvv = cvvMatch[0];
+
+                    return `${index + 1}: ${ccn}|${mm}|${yy}|${cvv}`;
+                }
+            } catch (e) {
+                return `${index + 1}: Error processing line`;
+            }
+        });
+
+        // Filter out undefined or null entries and display the results
+        output.value = sortedCards.filter(Boolean).join('\n');
+    }
+
+    function copyToClipboard() {
+        const output = document.getElementById('output').value;
+
+        // Remove line numbers before copying
+        const lines = output.split('\n');
+        const unnumberedLines = lines.map(line => line.replace(/^\d+:\s*/, '')).join('\n');
+
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = unnumberedLines;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempTextArea);
+
+        alert('Output copied to clipboard without numbering!');
+    }
+</script>
+</body>
+
+</html>
